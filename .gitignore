@@ -17,7 +17,7 @@ bld/
 [Oo]bj/
 app.publish/
 out/
-
+.appsettings.json
 # Including IntelliSense databases
 *.sdf
 *.cache
