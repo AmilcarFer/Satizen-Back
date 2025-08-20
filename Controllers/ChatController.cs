@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Satizen_Api.Data;
 using Satizen_Api.Models;
 using Satizen_Api.Models.Dto.Mensaje;
+using Satizen_Api.Hubs;
 
 namespace Satizen_Api.Controllers
 {
