@@ -68,6 +68,7 @@ namespace Satizen_Api.Controllers
                 idReceptor = CreateMensajeDto.idReceptor,
                 contenidoMensaje = CreateMensajeDto.contenidoMensaje,
                 Timestamp = DateTime.UtcNow,
+                Entregado = false,
                 Visto = false
             };
 
@@ -75,9 +76,46 @@ namespace Satizen_Api.Controllers
             await _context.SaveChangesAsync();
 
             string groupName = $"{Math.Min(nuevoMensaje.idAutor, nuevoMensaje.idReceptor)}-{Math.Max(nuevoMensaje.idAutor, nuevoMensaje.idReceptor)}";
-            await _hubContext.Clients.Group(groupName).SendAsync("ReceiveMessage", nuevoMensaje.idAutor, nuevoMensaje.idReceptor, nuevoMensaje.contenidoMensaje, nuevoMensaje.Timestamp, nuevoMensaje.Visto);
+            await _hubContext.Clients.Group(groupName).SendAsync("ReceiveMessage", nuevoMensaje);
 
             return CreatedAtAction(nameof(GetMensajes), new { id = nuevoMensaje.Id }, nuevoMensaje);
+        }
+
+        [HttpPost("entregado/{id}")]
+        public async Task<IActionResult> MarcarEntregado(int id)
+        {
+            var mensaje = await _context.Mensajes.FindAsync(id);
+            if (mensaje == null)
+            {
+                return NotFound();
+            }
+
+            mensaje.Entregado = true;
+            await _context.SaveChangesAsync();
+
+            string groupName = $"{Math.Min(mensaje.idAutor, mensaje.idReceptor)}-{Math.Max(mensaje.idAutor, mensaje.idReceptor)}";
+            await _hubContext.Clients.Group(groupName).SendAsync("MessageDelivered", id);
+
+            return NoContent();
+        }
+
+        [HttpPost("visto/{id}")]
+        public async Task<IActionResult> MarcarVisto(int id)
+        {
+            var mensaje = await _context.Mensajes.FindAsync(id);
+            if (mensaje == null)
+            {
+                return NotFound();
+            }
+
+            mensaje.Visto = true;
+            mensaje.FechaLectura = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            string groupName = $"{Math.Min(mensaje.idAutor, mensaje.idReceptor)}-{Math.Max(mensaje.idAutor, mensaje.idReceptor)}";
+            await _hubContext.Clients.Group(groupName).SendAsync("MessageRead", id);
+
+            return NoContent();
         }
 
 
