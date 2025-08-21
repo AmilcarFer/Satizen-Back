@@ -145,7 +145,57 @@ namespace Satizen_Api.Controllers
             }
         }
 
+        //Endpoint que usa el paciente para realizar un llamado
+        //[Authorize(Policy = "AdminDoctorEnfermeroPaciente")]
+        [HttpPost]
+        [Route("AgregarLlamadoPaciente")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<ApiResponse>> CrearLlamadoPaciente([FromBody] PacienteCreateLlamado createDto)
+        {
+            try
+            {
+                var result = await _llamadoContext.Pacientes.FirstOrDefaultAsync(p => p.idUsuario == createDto.idPaciente);
+                var idPaciente = Convert.ToInt32(result.idPaciente);
 
+                if (createDto == null)
+                {
+                    _response.IsExitoso = false;
+                    _response.statusCode = HttpStatusCode.BadRequest;
+                    _response.ErrorMessages = new List<string> { "Datos de entrada incorrectos facha" };
+                    return BadRequest(_response);
+                }
+
+                var llamado = new Llamado
+                {
+                    idPaciente = idPaciente,
+                    observacionLlamado = createDto.observacionLlamado,
+                    estadoLlamado = "Pendiente",
+                    fechaHoraLlamado = DateTime.Now,
+                    prioridadLlamado = string.IsNullOrWhiteSpace(createDto.prioridadLlamado) ? "Alta" : createDto.prioridadLlamado
+                };
+
+                //if (createDto.prioridadLlamado == "" || createDto.prioridadLlamado == null)
+                //{
+                //    llamado.prioridadLlamado = "Media";
+                //}
+
+                await _llamadoContext.Llamados.AddAsync(llamado);
+                await _llamadoContext.SaveChangesAsync();
+                await _hubContext.Clients.All.SendAsync("nuevoLlamado");
+
+                _response.Resultado = llamado;
+                _response.statusCode = HttpStatusCode.Created;
+                return StatusCode((int)_response.statusCode, _response);
+            }
+            catch (Exception ex)
+            {
+                _response.IsExitoso = false;
+                _response.ErrorMessages = new List<string> { ex.ToString() };
+                _response.statusCode = HttpStatusCode.InternalServerError;
+                return StatusCode((int)_response.statusCode, _response);
+            }
+        }
 
         //[Authorize(Policy = "AdminDoctor")]
         [HttpPatch]
