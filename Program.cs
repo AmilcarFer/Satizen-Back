@@ -87,6 +87,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Admin", policy => policy.RequireClaim("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", "1"));
     options.AddPolicy("Doctor", policy => policy.RequireClaim("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", "2"));
     options.AddPolicy("Enfermero", policy => policy.RequireClaim("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", "3"));
+    options.AddPolicy("Usuario", policy => policy.RequireClaim("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", "4"));
 
     options.AddPolicy("AdminDoctorEnfermero", policy =>
         policy.RequireAssertion(context =>
@@ -99,6 +100,9 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("DoctorOrEnfermero", policy =>
         policy.RequireAssertion(context =>
             context.User.HasClaim(c => (c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role" && (c.Value == "2" || c.Value == "3")))));
+    options.AddPolicy("Usuario", policy =>
+        policy.RequireAssertion(context =>
+            context.User.HasClaim(c => (c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role" && (c.Value == "4")))));
 
 });
 
