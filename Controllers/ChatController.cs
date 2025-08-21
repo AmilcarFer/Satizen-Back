@@ -25,9 +25,9 @@ namespace Satizen_Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Mensaje>>> GetMensajes()
         {
-            return await _context.Mensajes.OrderBy(m => m.Timestamp).ToListAsync();
+            var mensajes = await _context.Mensajes.OrderBy(m => m.Timestamp).ToListAsync();
+            return Ok(mensajes); // Siempre un array
         }
-
 
         // GET: api/Mensajes/EntreUsuarios/{idAutor}/{idReceptor}
         [HttpGet("EntreUsuarios/{idAutor}/{idReceptor}")]
@@ -38,12 +38,8 @@ namespace Satizen_Api.Controllers
                 .OrderBy(m => m.Timestamp)
                 .ToListAsync();
 
-            if (mensajes == null || !mensajes.Any())
-            {
-                return Ok();
-            }
-
-            return mensajes;
+            // DEVUELVE SIEMPRE UN ARRAY (aunque sea vacío [])
+            return Ok(mensajes);
         }
 
         // POST: api/Mensajes
@@ -119,24 +115,13 @@ namespace Satizen_Api.Controllers
             return NoContent();
         }
 
-
-
-
-
         [HttpDelete("borrar-todo")]
         public IActionResult BorrarTodo()
         {
-            // Obtiene todos los registros de la tabla
             var todaelhistorial = _context.Mensajes.ToList();
-
-            // Elimina todos los registros
             _context.Mensajes.RemoveRange(todaelhistorial);
             _context.SaveChanges();
-
-            return NoContent(); // Devuelve 204 No Content
+            return NoContent();
         }
-
-
-
     }
 }
