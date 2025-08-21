@@ -16,9 +16,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddScoped<Utilidades>(); // Ac se agregan las utilidades
-builder.Services.AddSignalR(); // Ac se agregan las utilidades
-builder.Services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
+builder.Services.AddScoped<Utilidades>(); // Acá se agregan las utilidades
+builder.Services.AddSignalR(); // Acá se agregan las utilidades
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 // ------------- Seguridad JWT para los usuarios -------------------
@@ -74,7 +73,7 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-//Ac se agrega el contexto de la base de datos y se define el nombre de la cadena de conexion
+//Acá se agrega el contexto de la base de datos y se define el nombre de la cadena de conexion
 builder.Services.AddDbContext<ApplicationDbContext>(option =>
 {
     option.UseSqlServer(builder.Configuration.GetConnectionString("Conexion"));
@@ -82,7 +81,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(option =>
 
 //--------------------------------------------------------------------------------------------
 
-//Configuracin de roles
+//Configuración de roles
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("Admin", policy => policy.RequireClaim("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", "1"));
@@ -122,8 +121,8 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 app.UseHttpsRedirection();
-app.UseCors("CorsPolicy");  // Asegrate que est antes de UseAuthorization
-app.UseAuthentication();    // Asegrate de que UseAuthentication est antes
+app.UseCors("CorsPolicy");  // Asegúrate que está antes de UseAuthorization
+app.UseAuthentication();    // Asegúrate de que UseAuthentication está antes
 app.UseAuthorization();
 app.MapHub<ChatHub>("/chatHub");
 app.MapHub<AlertaHub>("/alertaHub");
