@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 
-[Authorize]
 public class ChatHub : Hub
 {
     private static Dictionary<string, string> ConnectedUsers = new Dictionary<string, string>();
