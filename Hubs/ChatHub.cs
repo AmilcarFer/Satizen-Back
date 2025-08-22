@@ -4,16 +4,12 @@ using Satizen_Api.Models;
 using Satizen_Api.Models.Dto.Mensaje;
 using System;
 
-namespace Satizen_Api.Hubs
+public class ChatHub : Hub
 {
-    /// <summary>
-    /// Hub de chat para manejo de mensajes en tiempo real.
-    /// Permite a los clientes unirse a conversaciones, enviar
-    /// mensajes y actualizar estados como entregado y visto.
-    /// </summary>
-    public class ChatHub : Hub
-    {
-        private readonly ApplicationDbContext _context;
+    private static Dictionary<string, string> ConnectedUsers = new Dictionary<string, string>();
+    private static Dictionary<string, HashSet<string>> GroupMembers = new Dictionary<string, HashSet<string>>();
+    private static readonly Dictionary<string, HashSet<string>> groupConnections = new Dictionary<string, HashSet<string>>();
+    private static readonly Dictionary<string, int> groupUserCount = new Dictionary<string, int>();
 
         public ChatHub(ApplicationDbContext context)
         {
