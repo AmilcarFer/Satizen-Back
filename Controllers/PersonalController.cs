@@ -25,7 +25,7 @@ namespace Satizen_Api.Controllers
         }
 
         //--------------- EndPoint que trae la lista completa de personal -------------------
-        [Authorize(Policy = "Admin")]
+        [Authorize(Policy = "AdminDoctorEnfermero")]
         [HttpGet]
         [Route("ListarPersonal")]
         public async Task<ActionResult<ApiResponse>> GetPersonal()

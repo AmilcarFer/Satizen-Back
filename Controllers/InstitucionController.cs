@@ -32,7 +32,7 @@ namespace Proyec_Satizen_Api.Controllers
         }
 
 
-        [Authorize(Policy = "Admin")]
+        [Authorize(Policy = "AdminDoctorEnfermero")]
         [HttpGet]
         [Route("ListarInstituciones")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -56,7 +56,7 @@ namespace Proyec_Satizen_Api.Controllers
             return _response;
         }
 
-        [Authorize(Policy = "Admin")]
+        [Authorize(Policy = "AdminDoctorEnfermero")]
         [HttpGet]
         [Route("ListarPorId/{id:int}")]
         [ProducesResponseType(StatusCodes.Status200OK)]

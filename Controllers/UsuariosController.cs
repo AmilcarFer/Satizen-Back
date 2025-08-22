@@ -36,7 +36,7 @@ namespace Satizen_Api.Controllers
         }
 
         //--------------- EndPoint que trae la lista completa de usuarios -------------------
-        [Authorize(Policy = "Admin")]
+        [Authorize(Policy = "AdminDoctorEnfermero")]
         [HttpGet]
         [Route("ListarUsuarios")]
         public async Task<ActionResult<ApiResponse>> GetUsuarios()
@@ -71,7 +71,7 @@ namespace Satizen_Api.Controllers
         }
 
         //------------- EndPoint que trae un usuario a través de la id --------------
-        [Authorize(Policy = "Admin")]
+        [Authorize(Policy = "AdminDoctorEnfermero")]
         [HttpGet]
         [Route("ListarPorId/{id}")]
 
