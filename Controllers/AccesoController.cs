@@ -263,7 +263,7 @@ namespace Satizen_Api.Controllers
 
             //string url = "http://localhost:8081/cambiarPassword/?token=" + token;
             //string url = "https://animated-panda-c5f730.netlify.app/cambiarPassword/?token=" + token;
-            string url = "http://168.226.219.57:3004/cambiarPassword/?token=" + token;
+            string url = "http://168.226.219.57:3004/Satizen/cambiarPassword/?token=" + token;
 
             var from = new EmailAddress("satizenexcelenciadigital@gmail.com", "Satizen");
             var subject = "Recuperar Contraseña - Satizen"; //Este es el asunto del correo
