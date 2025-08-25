@@ -1,14 +1,22 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Azure;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Satizen_Api.Custom;
-using Satizen_Api.Models;
-using Microsoft.AspNetCore.Authorization;
-using Satizen_Api.Data;
-using Satizen_Api.Models.Dto.Usuarios;
-using System.Net;
-using Azure;
+using Microsoft.Extensions.Configuration;
 using Prueba_Tecnica_Api.Models.Dto.Usuarios;
+using Satizen_Api.Custom;
+using Satizen_Api.Data;
+using Satizen_Api.Models;
+using Satizen_Api.Models.Dto.Usuarios;
+using SendGrid;
+using SendGrid.Helpers.Mail;
+using System;
+using System.Diagnostics;
+using System.Net;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Satizen_Api.Controllers
 {
@@ -20,12 +28,14 @@ namespace Satizen_Api.Controllers
         private readonly ApplicationDbContext _applicationDbContext;
         private readonly Utilidades _utilidades;
         protected ApiResponse _response;
+        private readonly IConfiguration _configuration;
 
-        public AccesoController(ApplicationDbContext applicationDbContext, Utilidades utilidades)
+        public AccesoController(ApplicationDbContext applicationDbContext, Utilidades utilidades, IConfiguration configuration)
         {
             _applicationDbContext = applicationDbContext;
             _utilidades = utilidades;
             _response = new();
+            _configuration = configuration;
         }
 
 
@@ -150,5 +160,128 @@ namespace Satizen_Api.Controllers
 
             return Ok(new { isSuccess = true, token = response.Token, refreshToken = response.RefreshToken });
         }
+
+
+        //Recuperar contraseña
+        [HttpPatch]
+        [Route("RecuperarContraseña")]
+        public async Task<ActionResult<ApiResponse>> Restaurar(RecuperarPasswordDto recuperarDto)
+        {
+            try
+            {
+                var usuario = await _applicationDbContext.Usuarios.FirstOrDefaultAsync(u => u.correo == recuperarDto.correo && u.fechaEliminacion == null);
+                if (usuario == null)
+                {
+                    _response.IsExitoso = false;
+                    _response.statusCode = HttpStatusCode.BadRequest;
+                    _response.ErrorMessages = new List<string> { "El correo no existe" };
+
+                    return BadRequest(_response);
+                }
+
+                //var token = GetSha256(Guid.NewGuid().ToString());
+
+                usuario.recoveryToken = GetSha256(Guid.NewGuid().ToString());
+
+
+                _applicationDbContext.Usuarios.Update(usuario);
+                await _applicationDbContext.SaveChangesAsync();
+                //Enviar Email
+                await SendEmail(usuario.correo, usuario.recoveryToken, _configuration);
+
+                _response.statusCode = HttpStatusCode.OK;
+                _response.IsExitoso = true;
+                _response.Resultado = usuario;
+
+                return StatusCode((int)_response.statusCode, _response);
+
+            }
+            catch (Exception ex)
+            {
+                _response.IsExitoso = false;
+                _response.ErrorMessages = new List<string> { ex.ToString() };
+                return StatusCode((int)_response.statusCode, _response);
+            }
+        }
+
+        //Cambiar contraseña
+        [HttpPatch]
+        [Route("CambiarContraseña")]
+        public async Task<ActionResult<ApiResponse>> Cambiar(CambiarPasswordDto cambiarDto)
+        {
+            try
+            {
+                var usuario = await _applicationDbContext.Usuarios.FirstOrDefaultAsync(u => u.recoveryToken == cambiarDto.recoveryToken);
+                if (usuario == null)
+                {
+                    _response.IsExitoso = false;
+                    _response.statusCode = HttpStatusCode.BadRequest;
+                    _response.ErrorMessages = new List<string> { "El token no es correcto o ha vencido" };
+
+                    return BadRequest(_response);
+                }
+
+                usuario.password = _utilidades.encriptarSHA256(cambiarDto.password);
+                usuario.recoveryToken = null;
+
+                _applicationDbContext.Usuarios.Update(usuario);
+                await _applicationDbContext.SaveChangesAsync();
+
+                _response.statusCode = HttpStatusCode.OK;
+                _response.IsExitoso = true;
+                _response.Resultado = usuario;
+
+                return StatusCode((int)_response.statusCode, _response);
+
+            }
+            catch (Exception ex)
+            {
+                _response.IsExitoso = false;
+                _response.ErrorMessages = new List<string> { ex.ToString() };
+                return StatusCode((int)_response.statusCode, _response);
+            }
+        }
+
+        //Generar recovery token
+        private string GetSha256(string cadena)
+        {
+            SHA256 sha256 = SHA256.Create();
+            ASCIIEncoding encoding = new ASCIIEncoding();
+            byte[] stream = null;
+            StringBuilder sb = new StringBuilder();
+            stream = sha256.ComputeHash(encoding.GetBytes(cadena));
+            for (int i = 0; i < stream.Length; i++) sb.AppendFormat("{0:x2}", stream[i]);
+            return sb.ToString();
+        }
+
+        //Generar correo electronico
+        static async Task SendEmail(string emailDestino, string token, IConfiguration configuration)
+        {
+            //var apiKey = Environment.GetEnvironmentVariable("SatizenCorreoClave");
+            string apiKey = configuration["SendGrid:ApiKey"];
+            var client = new SendGridClient(apiKey);
+
+            string url = "http://localhost:8081/cambiarPassword/?token=" + token;
+            //string url = "https://animated-panda-c5f730.netlify.app/cambiarPassword/?token=" + token;
+
+            var from = new EmailAddress("satizenexcelenciadigital@gmail.com", "Satizen");
+            var subject = "Recuperar Contraseña - Satizen"; //Este es el asunto del correo
+            var to = new EmailAddress(emailDestino);
+            var plainTextContent = "Recuperar contraseña - Satizen";
+            var htmlContent = "<p>Correo para recuperar la contraseña de Satizen</p> </br> <a href='" + url + "'>Haz click aquí</a>"; //Este es el cuerpo del correo
+            var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
+
+            var response = await client.SendEmailAsync(msg);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                Debug.WriteLine("Correo enviado correctamente");
+            }
+            else
+            {
+                Debug.WriteLine($"Error al enviar el correo: {response.StatusCode}");
+            }
+        }
+
     }
 }
