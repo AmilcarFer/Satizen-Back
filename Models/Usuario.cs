@@ -15,6 +15,7 @@ namespace Satizen_Api.Models
         public int? idRoles { get; set; }
         [ForeignKey("idRoles")]
         public virtual Roles Roles { get; set; }
+        public string? recoveryToken { get; set; }
 
         public DateTime fechaCreacion { get; set; }
         public DateTime? fechaActualizacion { get; set; }
